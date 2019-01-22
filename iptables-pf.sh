@@ -42,6 +42,11 @@ install_iptables(){
 	iptables_exist=$(iptables -V)
 	if [[ ${iptables_exist} != "" ]]; then
 		echo -e "${Info} 已经安装iptables，继续..."
+		yum update
+	        cat /etc/redhat-release |grep 7\..*|grep -i centos>/dev/null
+	       	if [[ $? = 0 ]]; then
+	         	yum install -y iptables-services
+		fi
 	else
 		echo -e "${Info} 检测到未安装 iptables，开始安装..."
 		if [[ ${release}  == "centos" ]]; then
