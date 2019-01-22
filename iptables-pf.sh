@@ -45,8 +45,14 @@ install_iptables(){
 	else
 		echo -e "${Info} 检测到未安装 iptables，开始安装..."
 		if [[ ${release}  == "centos" ]]; then
-			yum update
-			yum install -y iptables
+		        yum update
+	       		cat /etc/redhat-release |grep 7\..*|grep -i centos>/dev/null
+	       		if [[ $? = 0 ]]; then
+	         	       yum install -y iptables iptables-services
+			
+			else
+			       yum install -y iptables
+			fi
 		else
 			apt-get update
 			apt-get install -y iptables
@@ -234,8 +240,15 @@ Set_iptables(){
 	echo -e "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
 	sysctl -p
 	if [[ ${release} == "centos" ]]; then
-		service iptables save
-		chkconfig --level 2345 iptables on
+	       cat /etc/redhat-release |grep 7\..*|grep -i centos>/dev/null
+	       if [[ $? = 0 ]]; then
+	                service iptables save
+			systemctl enable iptables
+			
+		else
+		        service iptables save
+			chkconfig --level 2345 iptables on
+		fi
 	else
 		iptables-save > /etc/iptables.up.rules
 		echo -e '#!/bin/bash\n/sbin/iptables-restore < /etc/iptables.up.rules' > /etc/network/if-pre-up.d/iptables
