@@ -137,7 +137,7 @@ Add_forwarding(){
 		Add_iptables "udp"
 	fi
 	Save_iptables
-	clear && echo && echo -e "——————————————————————————————
+	echo && echo -e "——————————————————————————————
 	iptables 端口转发规则配置完成 !\n
 	本地监听端口    : ${Green_font_prefix}${local_port}${Font_color_suffix}
 	服务器 IP\t: ${Green_font_prefix}${local_ip}${Font_color_suffix}\n
