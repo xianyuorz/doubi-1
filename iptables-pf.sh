@@ -217,8 +217,16 @@ Set_iptables(){
 	echo -e "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
 	sysctl -p
 	iptables-save > /etc/iptables.up.rules
-	echo -e '#!/bin/bash\n/sbin/iptables-restore < /etc/iptables.up.rules' > /etc/network/if-pre-up.d/iptables
-	chmod +x /etc/network/if-pre-up.d/iptables
+	if  [[ -f /etc/rc.local ]]; then
+		sed -i '/exit .*/d' /etc/rc.local
+		sed -i '$a\/sbin/iptables-restore < /etc/iptables.up.rules' /etc/rc.local
+		sed -i '$a\exit 0' /etc/rc.local
+		chmod +x /etc/rc.local
+	else
+		echo -e '#!/bin/sh -e\n/sbin/iptables-restore < /etc/iptables.up.rules\nexit 0' > /etc/rc.local
+		chmod +x /etc/rc.local
+		systemctl start rc-local
+	fi
 }
 Update_Shell(){
 	sh_new_ver=$(wget --no-check-certificate -qO- -t1 -T3 "https://raw.githubusercontent.com/myqmdx/doubi/master/iptables-pf.sh"|grep 'sh_ver="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
