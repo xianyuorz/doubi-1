@@ -3,7 +3,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
 #=================================================
-#	System Required: CentOS/Debian/Ubuntu
+#	System Required: Debian/Ubuntu
 #	Description: iptables Port forwarding
 #	Version: 1.1.1
 #	Author: Toyo
@@ -21,47 +21,33 @@ check_iptables(){
 	[[ ${iptables_exist} = "" ]] && echo -e "${Error} 没有安装iptables，请检查 !" && exit 1
 }
 check_sys(){
-	if [[ -f /etc/redhat-release ]]; then
-		release="centos"
-	elif cat /etc/issue | grep -q -E -i "debian"; then
+	if cat /etc/issue | grep -q -E -i "debian"; then
 		release="debian"
+	elif  [[ -f /etc/redhat-release ]]; then
+		echo -e "${Error} 当前脚本暂不支持Centos/Redhat,请更换为Ubuntu/Debian" && exit 1
 	elif cat /etc/issue | grep -q -E -i "ubuntu"; then
 		release="ubuntu"
 	elif cat /etc/issue | grep -q -E -i "centos|red hat|redhat"; then
-		release="centos"
+		echo -e "${Error} 当前脚本暂不支持Centos/Redhat,请更换为Ubuntu/Debian" && exit 1
 	elif cat /proc/version | grep -q -E -i "debian"; then
 		release="debian"
 	elif cat /proc/version | grep -q -E -i "ubuntu"; then
 		release="ubuntu"
 	elif cat /proc/version | grep -q -E -i "centos|red hat|redhat"; then
-		release="centos"
-    fi
+		echo -e "${Error} 当前脚本暂不支持Centos/Redhat,请更换为Ubuntu/Debian" && exit 1
+	else
+		echo -e "${Error} 当前脚本暂不支持你的系统,请更换为Ubuntu/Debian" && exit 1
+        fi
 	#bit=`uname -m`
 }
 install_iptables(){
 	iptables_exist=$(iptables -V)
 	if [[ ${iptables_exist} != "" ]]; then
 		echo -e "${Info} 已经安装iptables，继续..."
-	        cat /etc/redhat-release |grep 7\..*|grep -i centos>/dev/null
-	       	if [[ $? = 0 ]]; then
-		        yum update
-	         	yum install -y iptables-services
-		fi
 	else
 		echo -e "${Info} 检测到未安装 iptables，开始安装..."
-		if [[ ${release}  == "centos" ]]; then
-		        yum update
-	       		cat /etc/redhat-release |grep 7\..*|grep -i centos>/dev/null
-	       		if [[ $? = 0 ]]; then
-	         	       yum install -y iptables iptables-services
-			
-			else
-			       yum install -y iptables
-			fi
-		else
-			apt-get update
-			apt-get install -y iptables
-		fi
+	        apt-get update
+	        apt-get install -y iptables
 		iptables_exist=$(iptables -V)
 		if [[ ${iptables_exist} = "" ]]; then
 			echo -e "${Error} 安装iptables失败，请检查 !" && exit 1
@@ -235,33 +221,17 @@ Del_iptables(){
 	iptables -D INPUT -m state --state NEW -m "$1" -p "$1" --dport "${forwarding_listen}" -j ACCEPT
 }
 Save_iptables(){
-	if [[ ${release} == "centos" ]]; then
-		service iptables save
-	else
-		iptables-save > /etc/iptables.up.rules
-	fi
+        iptables-save > /etc/iptables.up.rules
 }
 Set_iptables(){
 	echo -e "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
 	sysctl -p
-	if [[ ${release} == "centos" ]]; then
-	       cat /etc/redhat-release |grep 7\..*|grep -i centos>/dev/null
-	       if [[ $? = 0 ]]; then
-	                service iptables save
-			systemctl enable iptables
-			
-		else
-		        service iptables save
-			chkconfig --level 2345 iptables on
-		fi
-	else
-		iptables-save > /etc/iptables.up.rules
-		echo -e '#!/bin/bash\n/sbin/iptables-restore < /etc/iptables.up.rules' > /etc/network/if-pre-up.d/iptables
-		chmod +x /etc/network/if-pre-up.d/iptables
-	fi
+	iptables-save > /etc/iptables.up.rules
+	echo -e '#!/bin/bash\n/sbin/iptables-restore < /etc/iptables.up.rules' > /etc/network/if-pre-up.d/iptables
+	chmod +x /etc/network/if-pre-up.d/iptables
 }
 Update_Shell(){
-	sh_new_ver=$(wget --no-check-certificate -qO- -t1 -T3 "https://raw.githubusercontent.com/ToyoDAdoubiBackup/doubi/master/iptables-pf.sh"|grep 'sh_ver="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
+	sh_new_ver=$(wget --no-check-certificate -qO- -t1 -T3 "https://raw.githubusercontent.com/myqmdx/doubi/master/iptables-pf.sh"|grep 'sh_ver="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
 	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 无法链接到 Github !" && exit 0
 	wget -N --no-check-certificate "https://raw.githubusercontent.com/ToyoDAdoubiBackup/doubi/master/iptables-pf.sh" && chmod +x iptables-pf.sh
 	echo -e "脚本已更新为最新版本[ ${sh_new_ver} ] !(注意：因为更新方式为直接覆盖当前运行的脚本，所以可能下面会提示一些报错，无视即可)" && exit 0
