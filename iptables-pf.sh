@@ -190,17 +190,7 @@ Uninstall_forwarding(){
 	read -e -p "(默认: n):" unyn
 	[[ -z ${unyn} ]] && unyn="n"
 	if [[ ${unyn} == [Yy] ]]; then
-		forwarding_text=$(iptables -t nat -vnL PREROUTING|tail -n +3)
-		[[ -z ${forwarding_text} ]] && echo -e "${Error} 没有发现 iptables 端口转发规则，请检查 !" && exit 1
-		forwarding_total=$(echo -e "${forwarding_text}"|wc -l)
-		for((integer = 1; integer <= ${forwarding_total}; integer++))
-		do
-			forwarding_type=$(echo -e "${forwarding_text}"|awk '{print $4}'|sed -n "${integer}p")
-			forwarding_listen=$(echo -e "${forwarding_text}"|awk '{print $11}'|sed -n "${integer}p"|awk -F "dpt:" '{print $2}')
-			[[ -z ${forwarding_listen} ]] && forwarding_listen=$(echo -e "${forwarding_text}"| awk '{print $11}'|sed -n "${integer}p"|awk -F "dpts:" '{print $2}')
-			# echo -e "${forwarding_text} ${forwarding_type} ${forwarding_listen}"
-			Del_iptables "${forwarding_type}" "${integer}"
-		done
+		iptables -t nat -F
 		Save_iptables
 		echo && echo -e "${Info} iptables 已清空 所有端口转发规则 !" && echo
 	else
