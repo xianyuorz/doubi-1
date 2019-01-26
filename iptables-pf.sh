@@ -165,7 +165,7 @@ Del_forwarding(){
 	while true
 	do
 	View_forwarding
-	read -e -p "请输入数字 来选择要删除的 iptables 端口转发规则(默认回车取消):" Del_forwarding_num
+	read -e -p "请输入数字 来选择要删除的 iptables 端口转发规则(使用 Ctrl+C 退出):" Del_forwarding_num
 	[[ -z "${Del_forwarding_num}" ]] && Del_forwarding_num="0"
 	echo $((${Del_forwarding_num}+0)) &>/dev/null
 	if [[ $? -eq 0 ]]; then
